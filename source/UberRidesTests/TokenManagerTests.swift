@@ -29,6 +29,7 @@ class TokenManagerTests: XCTestCase {
 
     private var notificationFired = false
     private var keychain: KeychainWrapper?
+    private let kCheckFirstRun = "com.uber.checkFirstRun"
 
     override func setUp() {
         super.setUp()
@@ -99,6 +100,8 @@ class TokenManagerTests: XCTestCase {
 
         keychain?.setAccessGroup(accessGroup)
         keychain?.setObject(token, key: identifier)
+        NSUserDefaults.standardUserDefaults().setBool(true, forKey: kCheckFirstRun)
+        NSUserDefaults.standardUserDefaults().synchronize()
 
         let actualToken = TokenManager.fetchToken(identifier, accessGroup: accessGroup)
         XCTAssertNotNil(actualToken)
@@ -223,7 +226,7 @@ class TokenManagerTests: XCTestCase {
     }
 
     func testAppDeleteFunctionality() {
-        let kCheckFirstRun = "com.uber.checkFirstRun"
+        
         let identifier = "testIdentifier"
         let accessGroup = "testAccessGroup"
 
@@ -236,22 +239,14 @@ class TokenManagerTests: XCTestCase {
         XCTAssertEqual(actualToken?.tokenString, token.tokenString)
 
         // When app deleted, cleared the user default
-        let defaults = NSUserDefaults(suiteName:"com.uber.sdk.UberRides")
-        defaults?.removeObjectForKey(kCheckFirstRun)
-        defaults?.synchronize()
+        NSUserDefaults.standardUserDefaults().removeObjectForKey(kCheckFirstRun)
+        NSUserDefaults.standardUserDefaults().synchronize()
 
         let deletedToken = TokenManager.fetchToken(identifier, accessGroup: accessGroup)
         XCTAssertNil(deletedToken)
         XCTAssertNotEqual(deletedToken?.tokenString, token.tokenString)
         
         TokenManager.deleteToken(identifier, accessGroup: accessGroup)
-
-
-        let userDefault = NSUserDefaults.standardUserDefaults()
-        userDefault.removeObjectForKey(kCheckFirstRun)
-        userDefault.synchronize()
-        let checkData = userDefault.valueForKey(kCheckFirstRun)
-        XCTAssertNil(checkData)
     }
 
 
@@ -299,4 +294,5 @@ class TokenManagerTests: XCTestCase {
     func handleTokenManagerNotifications() {
         notificationFired = true
     }
+
 }
